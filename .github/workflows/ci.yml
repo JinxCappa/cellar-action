@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  shellcheck:
+    name: ShellCheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run ShellCheck
+        run: shellcheck install.sh configure-nix.sh
+
+  integration:
+    name: Integration (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run action
+        id: cellar
+        uses: ./
+        with:
+          version: latest
+
+      - name: Verify cellarctl is on PATH
+        run: command -v cellarctl
+
+      - name: Verify cellarctl runs
+        run: cellarctl --version
+
+      - name: Verify outputs
+        run: |
+          [[ -n "${{ steps.cellar.outputs.version }}" ]] || { echo "::error::version output is empty"; exit 1; }
+          [[ -f "${{ steps.cellar.outputs.cellarctl-path }}" ]] || { echo "::error::cellarctl-path does not exist"; exit 1; }

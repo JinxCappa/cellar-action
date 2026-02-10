@@ -1,0 +1,76 @@
+name: 'Setup Cellar'
+description: 'Install cellarctl CLI and optionally configure Nix to use a Cellar binary cache'
+branding:
+  icon: 'archive'
+  color: 'orange'
+
+inputs:
+  version:
+    description: 'Cellar version to install (e.g. "v0.1.3"). Defaults to latest release.'
+    required: false
+    default: 'latest'
+  token:
+    description: 'GitHub token for downloading release assets (avoids rate limits).'
+    required: false
+    default: ${{ github.token }}
+  configure-nix:
+    description: 'Configure Nix to use the cellar server as a substituter.'
+    required: false
+    default: 'false'
+  server:
+    description: 'Cellar server URL. Falls back to CELLAR_SERVER env var.'
+    required: false
+  signing-key:
+    description: 'Public signing key for Nix trusted-public-keys. Falls back to auto-fetch via cellarctl whoami.'
+    required: false
+  cellar-token:
+    description: 'Auth token for cellarctl. Falls back to CELLAR_TOKEN env var.'
+    required: false
+  install-cellard:
+    description: 'Also install the cellard server binary.'
+    required: false
+    default: 'false'
+
+outputs:
+  version:
+    description: 'The version of cellar that was installed'
+    value: ${{ steps.install.outputs.version }}
+  cellarctl-path:
+    description: 'Path to the installed cellarctl binary'
+    value: ${{ steps.install.outputs.cellarctl-path }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Install Cellar
+      id: install
+      shell: bash
+      env:
+        INPUT_VERSION: ${{ inputs.version }}
+        INPUT_TOKEN: ${{ inputs.token }}
+        INPUT_INSTALL_CELLARD: ${{ inputs.install-cellard }}
+        GH_TOKEN: ${{ inputs.token }}
+      run: ${{ github.action_path }}/install.sh
+
+    - name: Configure Nix
+      if: inputs.configure-nix == 'true'
+      shell: bash
+      env:
+        INPUT_SERVER: ${{ inputs.server }}
+        INPUT_SIGNING_KEY: ${{ inputs.signing-key }}
+        INPUT_CELLAR_TOKEN: ${{ inputs.cellar-token }}
+      run: ${{ github.action_path }}/configure-nix.sh
+
+    - name: Configure cellarctl
+      if: inputs.cellar-token != ''
+      shell: bash
+      env:
+        INPUT_SERVER: ${{ inputs.server }}
+        INPUT_CELLAR_TOKEN: ${{ inputs.cellar-token }}
+      run: |
+        if [[ -z "${CELLAR_SERVER:-}" ]]; then
+          echo "CELLAR_SERVER=$INPUT_SERVER" >> "$GITHUB_ENV"
+        fi
+        if [[ -z "${CELLAR_TOKEN:-}" ]]; then
+          echo "CELLAR_TOKEN=$INPUT_CELLAR_TOKEN" >> "$GITHUB_ENV"
+        fi
