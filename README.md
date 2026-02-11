@@ -7,15 +7,15 @@ GitHub Action to install [cellarctl](https://github.com/JinxCappa/cellar) and op
 ### Install cellarctl only
 
 ```yaml
-- uses: JinxCappa/cellar-action@main
+- uses: JinxCappa/cellar-action@v1
 ```
 
 ### Install a specific version
 
 ```yaml
-- uses: JinxCappa/cellar-action@main
+- uses: JinxCappa/cellar-action@v1
   with:
-    version: v0.1.3
+    version: v0.1.0
 ```
 
 ### Configure Nix using environment variables (recommended)
