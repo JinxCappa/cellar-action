@@ -49,7 +49,7 @@ block=$(printf '%s\n' \
 if [[ -f "$nix_conf" ]] && grep -qxF "$begin_marker" "$nix_conf"; then
   # Replace existing block in place
   tmp=$(mktemp)
-  sudo awk -v b="$begin_marker" -v e="$end_marker" -v block="$block" '
+  awk -v b="$begin_marker" -v e="$end_marker" -v block="$block" '
     $0 == b { print block; skip = 1; next }
     skip && $0 == e { skip = 0; next }
     !skip { print }
