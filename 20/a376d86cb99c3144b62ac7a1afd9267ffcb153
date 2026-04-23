@@ -1,0 +1,23 @@
+configure-nix.sh
+  55ef0f96bbf258c0 36,39-40,42-62
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "20a376d86cb99c3144b62ac7a1afd9267ffcb153",
+  "prompts": {
+    "55ef0f96bbf258c0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "11b8fbe2-411f-4313-b39c-0155b5b63fe6",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "JinxCappa",
+      "messages": [],
+      "total_additions": 24,
+      "total_deletions": 5,
+      "accepted_lines": 24,
+      "overriden_lines": 0
+    }
+  }
+}
