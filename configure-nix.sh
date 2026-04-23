@@ -33,14 +33,33 @@ if [[ ! -d /etc/nix ]]; then
   sudo mkdir -p /etc/nix
 fi
 
-# --- Append substituter config ---
+# --- Write substituter config (idempotent via marker block) ---
 echo "Configuring Nix to use cellar substituter: $server"
 
-# Add running user as trusted (so extra-* is respected)
-printf '\ntrusted-users = root %s\n' "$(whoami)" | sudo tee -a "$nix_conf" >/dev/null
+begin_marker="# BEGIN cellar-action"
+end_marker="# END cellar-action"
 
-printf 'extra-substituters = %s\n' "$server" | sudo tee -a "$nix_conf" >/dev/null
-printf 'extra-trusted-public-keys = %s\n' "$signing_key" | sudo tee -a "$nix_conf" >/dev/null
+block=$(printf '%s\n' \
+  "$begin_marker" \
+  "trusted-users = root $(whoami)" \
+  "extra-substituters = $server" \
+  "extra-trusted-public-keys = $signing_key" \
+  "$end_marker")
+
+if [[ -f "$nix_conf" ]] && grep -qxF "$begin_marker" "$nix_conf"; then
+  # Replace existing block in place
+  tmp=$(mktemp)
+  sudo awk -v b="$begin_marker" -v e="$end_marker" -v block="$block" '
+    $0 == b { print block; skip = 1; next }
+    skip && $0 == e { skip = 0; next }
+    !skip { print }
+  ' "$nix_conf" > "$tmp"
+  sudo cp "$tmp" "$nix_conf"
+  rm -f "$tmp"
+else
+  # Append new block (ensure leading newline separation)
+  printf '\n%s\n' "$block" | sudo tee -a "$nix_conf" >/dev/null
+fi
 
 echo "Nix configuration updated at $nix_conf"
 
